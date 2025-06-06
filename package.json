@@ -7,6 +7,7 @@
     "start": "node functions/signup.js",
     "start-signup": "node functions/signup.js",
     "start-login": "node functions/login.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
