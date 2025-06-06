@@ -1,13 +1,15 @@
 {
   "name": "mylabs-signup-api",
   "version": "1.0.0",
-  "type": "module",
   "main": "functions/signup.js",
+  "type": "commonjs",
   "scripts": {
-    "start": "node functions/signup.js"
+    "start-signup": "node functions/signup.js",
+    "start-login": "node functions/login.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "@supabase/supabase-js": "^2.43.4"
+    "@supabase/supabase-js": "^2.42.4",
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2"
   }
 }
