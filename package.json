@@ -4,9 +4,11 @@
   "main": "functions/signup.js",
   "type": "commonjs",
   "scripts": {
-    "start-signup": "node functions/signup.js",
-    "start-login": "node functions/login.js"
-  },
+  "start": "node functions/signup.js",
+  "start-signup": "node functions/signup.js",
+  "start-login": "node functions/login.js"
+}
+  
   "dependencies": {
     "@supabase/supabase-js": "^2.42.4",
     "body-parser": "^1.20.2",
