@@ -1,0 +1,13 @@
+{
+  "name": "mylabs-signup-api",
+  "version": "1.0.0",
+  "main": "signup.js",
+  "type": "module",
+  "scripts": {
+    "start": "node signup.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.42.5",
+    "dotenv": "^16.4.5"
+  }
+}
