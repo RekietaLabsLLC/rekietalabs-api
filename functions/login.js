@@ -10,20 +10,18 @@ const router = express.Router();
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // We use service role because we want trusted server calls
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// POST /login
 router.post('/', async (req, res) => {
   const { email, password } = req.body;
 
-  // Validate input
+  // Validate
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
   try {
-    // Sign in user with email and password
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -33,7 +31,6 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
 
-    // Success!
     res.status(200).json({
       message: 'Login successful.',
       session: data.session,
