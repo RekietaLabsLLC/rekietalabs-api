@@ -1,22 +1,48 @@
+// functions/login.js
+
 import express from 'express';
-import { supabase } from './supabaseClient.js';
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
 
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // We use service role because we want trusted server calls
+);
+
+// POST /login
 router.post('/', async (req, res) => {
   const { email, password } = req.body;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  // Validate input
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
 
-  if (error) return res.status(400).json({ error: error.message });
+  try {
+    // Sign in user with email and password
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-  res.json({
-    message: 'User logged in successfully',
-    user: data.user,
-  });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    // Success!
+    res.status(200).json({
+      message: 'Login successful.',
+      session: data.session,
+      user: data.user
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
 });
 
 export default router;
