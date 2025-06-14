@@ -1,13 +1,8 @@
 // functions/signup.js
 import express from 'express';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from './supabaseClient.js';
 
 const router = express.Router();
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 router.post('/', async (req, res) => {
   const { email, password, first_name, last_name } = req.body;
