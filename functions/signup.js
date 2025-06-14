@@ -12,7 +12,7 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const { data, error } = await supabase.auth.admin.createUser({
+    const { data, error } = await supabase.auth.signUp()
       email,
       password,
       email_confirm: true,
