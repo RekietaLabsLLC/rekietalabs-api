@@ -1,17 +1,17 @@
 import express from 'express';
-import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
-import axios from 'axios';
+import dotenv from 'dotenv';
+import crypto from 'crypto';
+import fetch from 'node-fetch';
 
+dotenv.config();
 const router = express.Router();
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const makeWebhookUrl = 'https://hook.us2.make.com/adb3g76va111srplut8i7wj5pcz856y2';
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
+// Initialize Supabase client with service role to prevent auto-verification
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 router.post('/', async (req, res) => {
   const { email, password, first_name, last_name } = req.body;
@@ -21,13 +21,12 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Step 1: Create account
-    const { data, error } = await supabase.auth.signUp({
+    // Step 1: Create the user (unverified)
+    const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: { first_name, last_name }
-      }
+      user_metadata: { first_name, last_name },
+      email_confirm: false, // Disable auto verification
     });
 
     if (error) {
@@ -36,33 +35,34 @@ router.post('/', async (req, res) => {
 
     const user = data.user;
 
-    // Step 2: Generate a secure token
+    // Step 2: Create a token (expires in 15 minutes)
     const token = crypto.randomBytes(32).toString('hex');
-    const expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-    // Step 3: Store token in Supabase table
-    const { error: insertError } = await adminSupabase
-      .from('email_tokens')
-      .insert([{ email, token, user_id: user.id, expires_at }]);
+    // Store token in user_metadata
+    await supabase.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        ...user.user_metadata,
+        email_token: token,
+        email_token_expiry: expiresAt
+      }
+    });
 
-    if (insertError) {
-      console.error('Token insert error:', insertError);
-      return res.status(500).json({ error: 'Failed to store token' });
-    }
-
-    // Step 4: Send confirmation email via Make
-    await axios.post(makeWebhookUrl, {
-      email,
-      first_name,
-      last_name,
-      token,
-      user_id: user.id,
-      confirmation_url: `https://accounts.rekietalabs.com/email/confirm?${encodeURIComponent(email)}?${token}?${user.id}`
+    // Step 3: Send email via Make webhook
+    await fetch(process.env.MAKE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: email,
+        subject: 'Verify your RekietaLabs account',
+        first_name,
+        confirm_link: `https://accounts.rekietalabs.com/email/confirm?email=${encodeURIComponent(email)}&token=${token}&uid=${user.id}`
+      })
     });
 
     return res.status(200).json({
-      message: 'User created. Please confirm your email using the link sent.',
-      user: user
+      message: 'User created. Please check your email to confirm your account.',
+      user_id: user.id
     });
 
   } catch (err) {
