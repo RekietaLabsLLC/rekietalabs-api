@@ -1,95 +1,57 @@
-// market-session.js
+// functions/market-session.js
+import express from 'express';
+import Stripe from 'stripe';
 
-const express = require('express');
-const app = express();
-const Stripe = require('stripe');
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Use env variable
+const router = express.Router();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-app.use(express.json());
+// GET /market-session → Health check
+router.get('/', (req, res) => {
+  res.send('Market Session API is live.');
+});
 
-// Your product catalog (make sure prices are in cents)
-const PRODUCTS = [
-  { id: 1, name: "Flower Fidget", price: 800 },    // $8.00
-  { id: 2, name: "Fidget Tree", price: 800 },      // $8.00
-  { id: 3, name: "Wizard Dino", price: 300 },      // $3.00
-];
-
-// Error codes for support
-const ERROR_CODES = {
-  INVALID_REQUEST: "340146",
-  ITEM_INVALID: "340026",
-  SERVER_ERROR: "340166",
-};
-
-app.post('/functions/market-session', async (req, res) => {
+// POST /market-session → Create checkout session
+router.post('/', async (req, res) => {
   try {
-    const { items } = req.body;
+    const { cartItems } = req.body;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        errorCode: ERROR_CODES.INVALID_REQUEST,
-        message: 'Invalid items payload.'
-      });
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      return res.status(400).json({ error: "Cart is empty or invalid", ref: "340156" });
     }
 
-    // Validate and prepare Stripe line items
-    const line_items = [];
+    const lineItems = [];
 
-    for (const item of items) {
-      const product = PRODUCTS.find(p => p.id === item.id);
-      if (!product) {
-        return res.status(400).json({
-          success: false,
-          errorCode: ERROR_CODES.ITEM_INVALID,
-          message: 'Invalid product in cart.'
-        });
+    for (const item of cartItems) {
+      if (!item.priceId || !item.quantity) {
+        return res.status(400).json({ error: "Invalid cart item", ref: "340256" });
       }
 
-      const quantity = parseInt(item.quantity);
-      if (!quantity || quantity < 1) {
-        return res.status(400).json({
-          success: false,
-          errorCode: ERROR_CODES.INVALID_REQUEST,
-          message: 'Invalid quantity.'
-        });
+      const productData = {
+        price: item.priceId,
+        quantity: item.quantity
+      };
+
+      if (item.customizations) {
+        productData.adjustable_quantity = { enabled: false };
+        productData.description = `Custom: Side 1 - ${item.customizations.side1}, Side 2 - ${item.customizations.side2}`;
       }
 
-      line_items.push({
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: product.name,
-          },
-          unit_amount: product.price, // in cents
-        },
-        quantity,
-      });
+      lineItems.push(productData);
     }
 
-    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items,
-      success_url: 'https://market.rekietalabs.com/orders/success',
-      cancel_url: 'https://market.rekietalabs.com/orders/canceled',
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: "https://market.rekietalabs.com/orders/success.html",
+      cancel_url: "https://market.rekietalabs.com/orders/canceled.html"
     });
 
-    return res.json({ success: true, checkoutUrl: session.url });
-
-  } catch (error) {
-    console.error('Checkout error:', error);
-    return res.status(500).json({
-      success: false,
-      errorCode: ERROR_CODES.SERVER_ERROR,
-      message: 'Internal server error.'
-    });
+    return res.status(200).json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe Checkout Error:", err);
+    return res.status(500).json({ error: "Internal Server Error", ref: "340356" });
   }
 });
 
-// If you want to run locally, uncomment the below:
-// const PORT = process.env.PORT || 3000;
-// app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-
-module.exports = app; // Export for serverless function environment
+export default router;
