@@ -72,8 +72,8 @@ app.post('/functions/market-session', async (req, res) => {
       payment_method_types: ['card'],
       mode: 'payment',
       line_items,
-      success_url: 'https://rekietalabs.com/market-success',
-      cancel_url: 'https://rekietalabs.com/market-cancel',
+      success_url: 'https://market.rekietalabs.com/orders/success',
+      cancel_url: 'https://market.rekietalabs.com/orders/canceled',
     });
 
     return res.json({ success: true, checkoutUrl: session.url });
