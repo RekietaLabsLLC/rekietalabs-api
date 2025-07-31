@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import signupRouter from './functions/signup.js';
 import loginRouter from './functions/login.js';
-import marketSessionHandler from './functions/market-session.js'; // ✅ IMPORT API
+import marketSessionHandler from './functions/market-session.js'; // ✅ IMPORT
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,23 +11,31 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ✅ CORS Settings
+// ✅ CORS Configuration
 app.use(cors({
-  origin: '*', // You can lock this down if needed
+  origin: [
+    'https://accounts.rekietalabs.com',
+    'https://market.rekietalabs.com'
+  ],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 }));
 
 app.use(express.json());
 
-// ✅ Routes
+// ✅ Route Imports
 app.use('/signup', signupRouter);
 app.use('/login', loginRouter);
 
-// ✅ Add the market-session route directly
+// ✅ Market Session POST
 app.use('/market-session', marketSessionHandler);
 
-// Root Health Check
+// ✅ Health Check for /market-session
+app.get('/market-session', (req, res) => {
+  res.send('🛒 Market Session API live');
+});
+
+// ✅ Root Health Check
 app.get('/', (req, res) => {
   res.send('🔒 RekietaLabs API is live!');
 });
