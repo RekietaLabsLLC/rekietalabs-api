@@ -1,81 +1,70 @@
-// functions/market-session.js
 import express from 'express';
 import Stripe from 'stripe';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const router = express.Router();
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ✅ GET: Basic health check if you visit the URL directly
-router.get('/', (req, res) => {
-  res.send('🛒 Market Session API is live!');
-});
+const products = [
+  {
+    id: "wizard-dino",
+    name: "Wizard Dino",
+    price: 3.00,
+    stripePriceId: "price_1RZdFXD69KEDp05GomdRWxNj"
+  },
+  {
+    id: "flower-fidget",
+    name: "Flower Fidget (GITD)",
+    price: 8.00,
+    stripePriceId: "price_1RZcp5D69KEDp05GEnpthdIB"
+  },
+  {
+    id: "fidget-tree",
+    name: "Fidget Tree (Custom)",
+    price: 8.00,
+    stripePriceId: "price_1RZcp6D69KEDp05GVcustomTree"
+  }
+];
 
-// ✅ POST: Create Checkout Session
 router.post('/', async (req, res) => {
-  const { itemId, customData } = req.body;
-
-  const priceIds = {
-    'wizard-dino': 'price_1RZdFXD69KEDp05GomdRWxNj', // $3
-    'flower-fidget-gitd': 'price_1RZcp5D69KEDp05GEnpthdIB', // $8
-    'fidget-tree': 'price_1RaTREE89ABC1234567890abc', // Real separate ID
-  };
-
-  const itemNames = {
-    'wizard-dino': 'Wizard Dino',
-    'flower-fidget-gitd': 'Glow-in-the-Dark Flower Fidget',
-    'fidget-tree': 'Custom Fidget Tree',
-  };
-
-  const refIdBase = '34' + Math.floor(10000 + Math.random() * 89999) + '6';
-
   try {
-    if (!itemId || !priceIds[itemId]) {
-      return res.status(400).json({
-        error: 'Invalid or missing itemId.',
-        refId: refIdBase,
-      });
+    const { cart } = req.body;
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+      return res.status(400).json({ error: "Cart must be a non-empty array.", refId: "3410016" });
     }
 
-    const metadata = {
-      itemId,
-      product: itemNames[itemId],
-    };
+    // Validate each item in cart
+    const lineItems = [];
 
-    if (itemId === 'fidget-tree') {
-      if (!customData || !customData.side1 || !customData.side2) {
-        return res.status(400).json({
-          error: 'Missing required color data for custom fidget tree.',
-          refId: refIdBase,
-        });
+    for (const item of cart) {
+      if (!item.id || typeof item.qty !== 'number' || item.qty < 1) {
+        return res.status(400).json({ error: "Invalid or missing itemId or qty.", refId: "3410026" });
       }
-      metadata.side1 = customData.side1;
-      metadata.side2 = customData.side2;
+
+      const product = products.find(p => p.id === item.id);
+      if (!product) {
+        return res.status(400).json({ error: `Product ID not found: ${item.id}`, refId: "3410036" });
+      }
+
+      lineItems.push({
+        price: product.stripePriceId,
+        quantity: item.qty
+      });
     }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceIds[itemId],
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       mode: 'payment',
-      metadata,
-      success_url: 'https://market.rekietalabs.com/success',
-      cancel_url: 'https://market.rekietalabs.com/cancel',
+      success_url: 'https://market.rekietalabs.com/orders/success',
+      cancel_url: 'https://market.rekietalabs.com/orders/canceled',
     });
 
     res.json({ url: session.url });
-  } catch (err) {
-    console.error('❌ Stripe session error:', err.message);
-    return res.status(500).json({
-      error: 'Failed to create checkout session.',
-      refId: refIdBase,
-    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error", refId: "3410046" });
   }
 });
 
