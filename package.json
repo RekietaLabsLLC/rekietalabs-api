@@ -12,6 +12,6 @@
     "@supabase/supabase-js": "^2.39.5",
     "node-fetch": "^3.3.2",
     "cors": "^2.8.5",
-    "stripe": "^12.19.0"
+    "stripe": "^11.21.0"
   }
 }
