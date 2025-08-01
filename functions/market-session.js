@@ -23,7 +23,7 @@ const products = [
     id: "fidget-tree",
     name: "Fidget Tree (Custom)",
     price: 8.00,
-    stripePriceId: "price_1RZcp6D69KEDp05GVcustomTree"
+    stripePriceId: "price_1RcWqMD69KEDp05GtJnngu4v"
   }
 ];
 
