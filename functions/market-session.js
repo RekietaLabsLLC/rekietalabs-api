@@ -1,10 +1,11 @@
+// market-session.js
 import express from 'express';
 import Stripe from 'stripe';
 
 const router = express.Router();
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// ✅ Product catalog
 const products = [
   {
     id: "wizard-dino",
@@ -26,6 +27,7 @@ const products = [
   }
 ];
 
+// ✅ POST /market-session
 router.post('/', async (req, res) => {
   try {
     const { cart } = req.body;
@@ -34,12 +36,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: "Cart must be a non-empty array.", refId: "3410016" });
     }
 
-    // Validate each item in cart
     const lineItems = [];
 
     for (const item of cart) {
-      if (!item.id || typeof item.qty !== 'number' || item.qty < 1) {
-        return res.status(400).json({ error: "Invalid or missing itemId or qty.", refId: "3410026" });
+      if (!item.id || typeof item.qty !== 'number' || item.qty < 1 || item.qty > 30) {
+        return res.status(400).json({ error: "Invalid or missing itemId or qty out of range (1–30).", refId: "3410026" });
       }
 
       const product = products.find(p => p.id === item.id);
@@ -61,10 +62,11 @@ router.post('/', async (req, res) => {
       cancel_url: 'https://market.rekietalabs.com/orders/canceled',
     });
 
-    res.json({ url: session.url });
+    return res.json({ url: session.url });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error", refId: "3410046" });
+    console.error("Stripe session error:", error);
+    return res.status(500).json({ error: "Internal server error.", refId: "3410046" });
   }
 });
 
