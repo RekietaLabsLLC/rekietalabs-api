@@ -1,21 +1,27 @@
 // index.js
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Existing route imports
 import signupRouter from './functions/signup.js';
 import loginRouter from './functions/login.js';
-import marketSessionHandler from './functions/market-session.js'; // ✅ IMPORT
-import dotenv from 'dotenv';
+import marketSessionHandler from './functions/market-session.js';
+
+// New import for gift card buy session handler
+import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ✅ CORS Configuration
+// CORS Configuration (add your allowed origins)
 app.use(cors({
   origin: [
     'https://accounts.rekietalabs.com',
-    'https://market.rekietalabs.com'
+    'https://market.rekietalabs.com',
+    'https://giftcard.hub.rekietalabs.com', // Add gift card frontend origin here
   ],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
@@ -23,19 +29,25 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ Route Imports
+// Existing route handlers
 app.use('/signup', signupRouter);
 app.use('/login', loginRouter);
-
-// ✅ Market Session POST
 app.use('/market-session', marketSessionHandler);
 
-// ✅ Health Check for /market-session
+// New gift card buy session POST handler
+app.use('/giftcard-buy-session', giftcardBuySessionHandler);
+
+// Health check for market-session
 app.get('/market-session', (req, res) => {
   res.send('🛒 Market Session API live');
 });
 
-// ✅ Root Health Check
+// Health check for giftcard-buy-session
+app.get('/giftcard-buy-session', (req, res) => {
+  res.send('🎁 Gift Card Buy Session API live');
+});
+
+// Root health check
 app.get('/', (req, res) => {
   res.send('🔒 RekietaLabs API is live!');
 });
