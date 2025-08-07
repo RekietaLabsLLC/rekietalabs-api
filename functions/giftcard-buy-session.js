@@ -1,12 +1,12 @@
+// functions/giftcard-buy-session.js
 import express from 'express';
 import Stripe from 'stripe';
 
-const app = express();
+const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-app.use(express.json());
-
-app.post('/giftcard-buy-session', async (req, res) => {
+// POST /giftcard-buy-session
+router.post('/', async (req, res) => {
   const { buyerFirstName, buyerEmail, amount, toName } = req.body;
 
   // Validate input
@@ -31,7 +31,7 @@ app.post('/giftcard-buy-session', async (req, res) => {
       amount_off: Math.round(numericAmount * 100),
       currency: 'usd',
       duration: 'repeating',
-      duration_in_months: 12,  // Gift card valid for 12 months
+      duration_in_months: 12,
       name: `RekietaLabs Gift Card for ${toNameSafe}`,
       metadata: {
         buyerFirstName: buyerFirstName.trim(),
@@ -80,8 +80,4 @@ app.post('/giftcard-buy-session', async (req, res) => {
   }
 });
 
-// Start server (use your preferred port)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Gift card backend running on port ${PORT}`);
-});
+export default router;
