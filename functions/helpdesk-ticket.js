@@ -1,7 +1,13 @@
 // functions/helpdesk-ticket.js
 import express from "express";
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
+const db = new Low(adapter, { tickets: [] });
+async function initDB() {
+  await db.read();
+  if (!db.data) {
+    db.data = { tickets: [] };
+    await db.write();
+  }
+}
 import path from "path";
 import { fileURLToPath } from "url";
 import crypto from "crypto";
