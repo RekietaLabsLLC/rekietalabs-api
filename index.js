@@ -7,10 +7,9 @@ import dotenv from 'dotenv';
 import signupRouter from './functions/signup.js';
 import loginRouter from './functions/login.js';
 import marketSessionHandler from './functions/market-session.js';
-import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 
-// New helpdesk route import
-import helpdeskTicketRouter from './functions/helpdesk-ticket.js';
+// New import for gift card buy session handler
+import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 
 dotenv.config();
 
@@ -22,12 +21,10 @@ app.use(cors({
   origin: [
     'https://accounts.rekietalabs.com',
     'https://market.rekietalabs.com',
-    'https://giftcard.hub.rekietalabs.com',
-    // Add your frontend origins for helpdesk if needed
-    'https://help.rekietalabs.com',
+    'https://giftcard.hub.rekietalabs.com', // Add gift card frontend origin here
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'x-admin-pin'],
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
 }));
 
 app.use(express.json());
@@ -36,10 +33,9 @@ app.use(express.json());
 app.use('/signup', signupRouter);
 app.use('/login', loginRouter);
 app.use('/market-session', marketSessionHandler);
-app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 
-// New helpdesk route handler
-app.use('/helpdesk-ticket', helpdeskTicketRouter);
+// New gift card buy session POST handler
+app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 
 // Health check for market-session
 app.get('/market-session', (req, res) => {
@@ -57,5 +53,4 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+  console.log(✅ Server running on port ${PORT});
