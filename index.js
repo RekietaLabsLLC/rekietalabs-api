@@ -1,3 +1,22 @@
+const requiredEnvVars = [
+  'GITHUB_TOKEN',
+  'GITHUB_REPO_OWNER',
+  'GITHUB_REPO_NAME',
+  'SUPPORT_SYSTEM_SMTP_HOST',
+  'SUPPORT_SYSTEM_SMTP_PORT',
+  'SUPPORT_SYSTEM_SMTP_USER',
+  'SUPPORT_SYSTEM_SMTP_PASS',
+  'TICKET_LINK_BASE',
+];
+
+const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
+
+if (missingVars.length > 0) {
+  console.error('Missing required environment variables:', missingVars.join(', '));
+} else {
+  console.log('All required environment variables are set.');
+}
+
 // index.js
 import express from 'express';
 import cors from 'cors';
