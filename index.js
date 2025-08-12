@@ -11,7 +11,6 @@ import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 
 // New ticket routes import
 import ticketsRouter from './functions/tickets/index.js';
-import ticketsCreateRouter from './functions/tickets/create.js';
 
 dotenv.config();
 
@@ -41,7 +40,6 @@ app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 
 // Tickets routes
 app.use('/tickets', ticketsRouter);
-app.use('/tickets/create', ticketsCreateRouter);
 
 // Health checks
 app.get('/market-session', (req, res) => {
