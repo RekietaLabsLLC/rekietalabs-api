@@ -9,25 +9,26 @@ import loginRouter from './functions/login.js';
 import marketSessionHandler from './functions/market-session.js';
 import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 
-// New ticket router import
-import ticketRouter from './functions/tickets/index.js';
+// New ticket routes import
+import ticketsRouter from './functions/tickets/index.js';
+import ticketsCreateRouter from './functions/tickets/create.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Updated CORS Configuration to include new portals
+// CORS Configuration (add your allowed origins)
 app.use(cors({
   origin: [
     'https://accounts.rekietalabs.com',
     'https://market.rekietalabs.com',
     'https://giftcard.hub.rekietalabs.com',
-    'https://customer.portal.hub.rekietalabs.com',
-    'https://staff.portal.hub.rekietalabs.com',
+    'https://customer.portal.hub.rekietalabs.com', // Add your customer portal origin
+    'https://staff.portal.hub.rekietalabs.com',    // Add your staff portal origin
   ],
   methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'x-admin-key', 'x-staff-key', 'username', 'password'],
 }));
 
 app.use(express.json());
@@ -38,8 +39,9 @@ app.use('/login', loginRouter);
 app.use('/market-session', marketSessionHandler);
 app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 
-// New tickets route handler
-app.use('/tickets', ticketRouter);
+// Tickets routes
+app.use('/tickets', ticketsRouter);
+app.use('/tickets/create', ticketsCreateRouter);
 
 // Health checks
 app.get('/market-session', (req, res) => {
