@@ -1,8 +1,8 @@
-// functions/tickets/index.js
 import express from 'express';
 import { Octokit } from '@octokit/rest';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { admins, staff } from './auth.js';
 
 const router = express.Router();
 
@@ -15,8 +15,6 @@ const {
   SUPPORT_SYSTEM_SMTP_USER,
   SUPPORT_SYSTEM_SMTP_PASS,
   TICKET_LINK_BASE,
-  ADMIN_SECRET_KEY,
-  STAFF_SECRET_KEY,
 } = process.env;
 
 if (
@@ -27,9 +25,7 @@ if (
   !SUPPORT_SYSTEM_SMTP_PORT ||
   !SUPPORT_SYSTEM_SMTP_USER ||
   !SUPPORT_SYSTEM_SMTP_PASS ||
-  !TICKET_LINK_BASE ||
-  !ADMIN_SECRET_KEY ||
-  !STAFF_SECRET_KEY
+  !TICKET_LINK_BASE
 ) {
   throw new Error('Missing required environment variables for tickets module');
 }
@@ -124,20 +120,32 @@ function generateTicketId() {
   return `ticket-${ts}-${rand}`;
 }
 
+// Auth helpers
+function isAdmin(username, password) {
+  return admins.some((user) => user.username === username && user.password === password);
+}
+
+function isStaff(username, password) {
+  return staff.some((user) => user.username === username && user.password === password);
+}
+
 // Middleware
 function checkAdmin(req, res, next) {
-  const key = req.headers['x-admin-key'];
-  if (!key || key !== ADMIN_SECRET_KEY) {
+  const { username, password } = req.headers;
+  if (!username || !password || !isAdmin(username, password)) {
     return res.status(403).json({ error: 'Forbidden: admin only' });
   }
   next();
 }
 
 function checkStaffOrAdmin(req, res, next) {
-  const key = req.headers['x-admin-key'];
-  if (key && key === ADMIN_SECRET_KEY) return next();
-  const staffKey = req.headers['x-staff-key'];
-  if (staffKey && staffKey === STAFF_SECRET_KEY) return next();
+  const { username, password } = req.headers;
+  if (!username || !password) {
+    return res.status(403).json({ error: 'Forbidden: staff or admin only' });
+  }
+  if (isAdmin(username, password) || isStaff(username, password)) {
+    return next();
+  }
   return res.status(403).json({ error: 'Forbidden: staff or admin only' });
 }
 
@@ -408,7 +416,7 @@ router.post('/:id/assign', checkAdmin, async (req, res) => {
     const ticket = safeJSONParse(dataRaw);
     if (!ticket) return res.status(500).json({ error: 'Corrupted ticket data' });
 
-    ticket.assigned_to = assigned_to;
+        ticket.assigned_to = assigned_to;
     ticket.updated_at = new Date().toISOString();
 
     await commitFile(`tickets/${ticketId}/data.json`, JSON.stringify(ticket, null, 2), `Ticket ${ticketId} assigned to ${assigned_to}`);
