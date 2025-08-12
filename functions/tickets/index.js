@@ -416,7 +416,7 @@ router.post('/:id/assign', checkAdmin, async (req, res) => {
     const ticket = safeJSONParse(dataRaw);
     if (!ticket) return res.status(500).json({ error: 'Corrupted ticket data' });
 
-        ticket.assigned_to = assigned_to;
+    ticket.assigned_to = assigned_to;
     ticket.updated_at = new Date().toISOString();
 
     await commitFile(`tickets/${ticketId}/data.json`, JSON.stringify(ticket, null, 2), `Ticket ${ticketId} assigned to ${assigned_to}`);
@@ -476,6 +476,47 @@ router.post('/:id/reopen', checkAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to reopen ticket' });
+  }
+});
+
+// ========== NEW ROUTES YOU REQUESTED ==========
+
+// GET /ticket/reply?ticketid=...
+router.get('/ticket/reply', async (req, res) => {
+  const ticketId = req.query.ticketid;
+  if (!ticketId) return res.status(400).json({ error: 'Missing ticketid query parameter' });
+
+  try {
+    const dataRaw = await getFileContent(`tickets/${ticketId}/data.json`);
+    if (!dataRaw) return res.status(404).json({ error: 'Ticket not found' });
+
+    const ticket = safeJSONParse(dataRaw);
+    if (!ticket) return res.status(500).json({ error: 'Corrupted ticket data' });
+
+    // Return only the messages array (the replies)
+    res.json({ messages: ticket.messages });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch ticket replies' });
+  }
+});
+
+// GET /ticket/id?ticketid=...
+router.get('/ticket/id', async (req, res) => {
+  const ticketId = req.query.ticketid;
+  if (!ticketId) return res.status(400).json({ error: 'Missing ticketid query parameter' });
+
+  try {
+    const dataRaw = await getFileContent(`tickets/${ticketId}/data.json`);
+    if (!dataRaw) return res.status(404).json({ error: 'Ticket not found' });
+
+    const ticket = safeJSONParse(dataRaw);
+    if (!ticket) return res.status(500).json({ error: 'Corrupted ticket data' });
+
+    res.json({ ticket });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch ticket data' });
   }
 });
 
