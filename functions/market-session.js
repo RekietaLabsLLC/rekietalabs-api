@@ -27,7 +27,7 @@ const products = [
   },
   {
       id: "flower-fidget-b",
-    name: "Fidget Tree (Black)",
+    name: "Fidget Tree (Rainbow)",
     price: 8.00,
     stripePriceId: "price_1Rz3DCD69KEDp05GaRCWZuiL"
   }
