@@ -14,7 +14,7 @@ const products = [
     stripePriceId: "price_1RZdFXD69KEDp05GomdRWxNj"
   },
   {
-    id: "flower-fidget",
+    id: "flower-fidget-a",
     name: "Flower Fidget (GITD)",
     price: 8.00,
     stripePriceId: "price_1RZcp5D69KEDp05GEnpthdIB"
@@ -24,6 +24,12 @@ const products = [
     name: "Fidget Tree (Custom)",
     price: 8.00,
     stripePriceId: "price_1RcWqMD69KEDp05GtJnngu4v"
+  },
+  {
+      id: "flower-fidget-b",
+    name: "Fidget Tree (Black)",
+    price: 8.00,
+    stripePriceId: "price_1Rz3DCD69KEDp05GaRCWZuiL"
   }
 ];
 
