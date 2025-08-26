@@ -1,9 +1,11 @@
 import express from "express";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const router = express.Router();
+router.use(cookieParser());
 
 // Allowed origins for this route only
 const allowedOrigins = [
@@ -14,20 +16,42 @@ const allowedOrigins = [
   "https://staff.portal.hub.rekietalabs.com",
 ];
 
+// GET route to provide Supabase config
 router.get("/", (req, res) => {
   const origin = req.headers.origin;
 
-  // Block if origin not in whitelist
   if (origin && !allowedOrigins.includes(origin)) {
     return res.status(403).json({ error: "Forbidden: Origin not allowed" });
   }
 
-  res.set("Cache-Control", "no-store"); // avoid stale keys
-  res.set("Access-Control-Allow-Origin", origin || ""); // explicitly allow the request origin
+  res.set("Cache-Control", "no-store");
+  res.set("Access-Control-Allow-Origin", origin || "");
   res.json({
     supabaseUrl: process.env.SUPABASE_URL,
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
   });
+});
+
+// POST route to store GitHub token in secure cookie
+router.post("/github-token", (req, res) => {
+  const origin = req.headers.origin;
+  if (origin && !allowedOrigins.includes(origin)) {
+    return res.status(403).json({ error: "Forbidden: Origin not allowed" });
+  }
+
+  const { access_token } = req.body;
+  if (!access_token) return res.status(400).json({ error: "Missing access token" });
+
+  // Set HTTP-only, Secure cookie
+  res.cookie("github_token", access_token, {
+    httpOnly: true,
+    secure: true, // only for HTTPS
+    sameSite: "Strict",
+    maxAge: 3600 * 1000, // 1 hour
+  });
+
+  res.set("Access-Control-Allow-Origin", origin || "");
+  res.json({ message: "Token stored successfully" });
 });
 
 export default router;
