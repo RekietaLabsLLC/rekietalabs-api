@@ -26,6 +26,7 @@ if (missingVars.length > 0) {
 // -----------------------------
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
 // Route imports
@@ -35,6 +36,7 @@ import marketSessionHandler from './functions/market-session.js';
 import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 import ticketsRouter from './functions/tickets/index.js';
 import configLoginRouter from './functions/config-login.js';
+import userRouter from './functions/user.js'; // new route for dashboard info
 
 // -----------------------------
 // Setup
@@ -55,11 +57,12 @@ app.use(cors({
     'https://customer.portal.hub.rekietalabs.com',
     'https://staff.portal.hub.rekietalabs.com',
   ],
+  credentials: true, // <-- allow cookies
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'x-admin-key', 'x-staff-key', 'username', 'password'],
 }));
-
 app.use(express.json());
+app.use(cookieParser());
 
 // -----------------------------
 // Routes
@@ -69,7 +72,8 @@ app.use('/login', loginRouter);
 app.use('/market-session', marketSessionHandler);
 app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 app.use('/tickets', ticketsRouter);
-app.use('/config-login', configLoginRouter);
+app.use('/config-login', configLoginRouter); // handles GitHub token and sets cookie
+app.use('/mylabs/user', userRouter); // secure route for dashboard info
 
 // Health checks
 app.get('/market-session', (req, res) => {
