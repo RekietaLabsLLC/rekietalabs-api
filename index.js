@@ -37,7 +37,7 @@ import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 import ticketsRouter from './functions/tickets/index.js';
 import configLoginRouter from './functions/config-login.js';
 import userRouter from './functions/user.js'; // new route for dashboard 
-import mylabsPlanPickRouter from './functions/mylabs-plan-
+import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 
 
 
