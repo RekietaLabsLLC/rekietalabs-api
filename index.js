@@ -1,3 +1,4 @@
+// Check required env vars BEFORE starting server
 const requiredEnvVars = [
   'GITHUB_TOKEN',
   'GITHUB_REPO_OWNER',
@@ -7,6 +8,9 @@ const requiredEnvVars = [
   'SUPPORT_SYSTEM_SMTP_USER',
   'SUPPORT_SYSTEM_SMTP_PASS',
   'TICKET_LINK_BASE',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'SUPABASE_ANON_KEY',
 ];
 
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
@@ -17,36 +21,39 @@ if (missingVars.length > 0) {
   console.log('All required environment variables are set.');
 }
 
-// index.js
+// -----------------------------
+// Imports
+// -----------------------------
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-// Existing route handlers
-app.use('/signup', signupRouter);
-app.use('/login', loginRouter);
-app.use('/market-session', marketSessionHandler);
-app.use('/giftcard-buy-session', giftcardBuySessionHandler);
+// Route imports
+import signupRouter from './functions/signup.js';
+import loginRouter from './functions/login.js';
+import marketSessionHandler from './functions/market-session.js';
+import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
+import ticketsRouter from './functions/tickets/index.js';
+import configLoginRouter from './functions/config-login.js';
 
-// Tickets routes
-app.use('/tickets', ticketsRouter);
-
-// Config for login frontend
-app.use('/config-login', configLoginRouter);
-
+// -----------------------------
+// Setup
+// -----------------------------
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// CORS Configuration (add your allowed origins)
+// -----------------------------
+// Middleware
+// -----------------------------
 app.use(cors({
   origin: [
     'https://accounts.rekietalabs.com',
     'https://market.rekietalabs.com',
     'https://giftcard.hub.rekietalabs.com',
-    'https://customer.portal.hub.rekietalabs.com', // Add your customer portal origin
-    'https://staff.portal.hub.rekietalabs.com',    // Add your staff portal origin
+    'https://customer.portal.hub.rekietalabs.com',
+    'https://staff.portal.hub.rekietalabs.com',
   ],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'x-admin-key', 'x-staff-key', 'username', 'password'],
@@ -54,14 +61,15 @@ app.use(cors({
 
 app.use(express.json());
 
-// Existing route handlers
+// -----------------------------
+// Routes
+// -----------------------------
 app.use('/signup', signupRouter);
 app.use('/login', loginRouter);
 app.use('/market-session', marketSessionHandler);
 app.use('/giftcard-buy-session', giftcardBuySessionHandler);
-
-// Tickets routes
 app.use('/tickets', ticketsRouter);
+app.use('/config-login', configLoginRouter);
 
 // Health checks
 app.get('/market-session', (req, res) => {
@@ -76,6 +84,9 @@ app.get('/', (req, res) => {
   res.send('🔒 RekietaLabs API is live!');
 });
 
+// -----------------------------
+// Start server
+// -----------------------------
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
