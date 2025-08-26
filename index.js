@@ -22,14 +22,17 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-// Existing route imports
-import signupRouter from './functions/signup.js';
-import loginRouter from './functions/login.js';
-import marketSessionHandler from './functions/market-session.js';
-import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
+// Existing route handlers
+app.use('/signup', signupRouter);
+app.use('/login', loginRouter);
+app.use('/market-session', marketSessionHandler);
+app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 
-// New ticket routes import
-import ticketsRouter from './functions/tickets/index.js';
+// Tickets routes
+app.use('/tickets', ticketsRouter);
+
+// Config for login frontend
+app.use('/config-login', configLoginRouter);
 
 dotenv.config();
 
