@@ -38,6 +38,7 @@ import ticketsRouter from './functions/tickets/index.js';
 import configLoginRouter from './functions/config-login.js';
 import userRouter from './functions/user.js'; // new route for dashboard 
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
+import myLabsUserRouter from './functions/mylabs-user.js';
 
 
 
@@ -78,6 +79,7 @@ app.use('/tickets', ticketsRouter);
 app.use('/config-login', configLoginRouter); // handles GitHub token and sets cookie
 app.use('/mylabs/user', userRouter); // secure route for dashboard info
 app.use('/plan-pick', mylabsPlanPickRouter);
+app.use('
 
 // Health checks
 app.get('/market-session', (req, res) => {
