@@ -78,7 +78,7 @@ app.use('/giftcard-buy-session', giftcardBuySessionHandler);
 app.use('/tickets', ticketsRouter);
 app.use('/config-login', configLoginRouter); // handles GitHub token and sets cookie
 app.use('/mylabs/user', userRouter); // secure route for dashboard info
-app.use('/plan-pick', mylabsPlanPickRouter);
+app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
 
 // Health checks
