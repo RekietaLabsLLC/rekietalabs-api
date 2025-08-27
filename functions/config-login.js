@@ -10,6 +10,8 @@ router.use(cookieParser());
 // Allowed origins for this route only
 const allowedOrigins = [
   "https://accounts.rekietalabs.com",
+  "https://accounts.rekietalabs.com/mylabs/login",
+  "https://accounts.rekietalabs.com/mylabs/pick-plan",
   "https://market.rekietalabs.com",
   "https://giftcard.hub.rekietalabs.com",
   "https://customer.portal.hub.rekietalabs.com",
