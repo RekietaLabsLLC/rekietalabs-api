@@ -8,7 +8,7 @@ dotenv.config();
 const router = express.Router();
 router.use(cookieParser());
 
-// Supabase (service role)
+// Initialize Supabase client with Service Role Key (server-side only)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -21,47 +21,35 @@ router.get("/", async (req, res) => {
       return res.status(401).json({ error: "No session found" });
     }
 
-    // Verify Supabase user
-    const { data: userData, error } = await supabase.auth.getUser(token);
-    if (error || !userData.user) {
+    // Get user from Supabase
+    const { data: userData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !userData.user) {
       return res.status(401).json({ error: "Invalid session" });
     }
 
-    const userId = userData.user.id;
-
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from("mylabs_users")
-      .select("id, full_name, email, is_staff")
-      .eq("id", userId)
-      .single();
-
-    if (profileError || !profile) {
-      return res.status(404).json({ error: "User not found in mylabs_users" });
-    }
-
-    // Get subscription info
-    const { data: subData, error: subError } = await supabase
+    // Fetch subscription info from user_subscriptions
+    const { data: subscription, error: subError } = await supabase
       .from("user_subscriptions")
-      .select("plan, current_period_end, is_staff")
-      .eq("user_id", userId)
+      .select("id, user_id, plan, is_staff, stripe_customer_id, stripe_subscription_id, current_period_end")
+      .eq("user_id", userData.user.id)
       .single();
 
-    if (subError && subError.code !== "PGRST116") {
-      console.error("Subscription fetch error:", subError);
-      return res.status(500).json({ error: "Failed to fetch subscription" });
+    if (subError || !subscription) {
+      return res.status(404).json({ error: "Subscription not found for this user" });
     }
 
     res.json({
-      id: profile.id,
-      name: profile.full_name,
-      email: profile.email,
-      isStaff: profile.is_staff || subData?.is_staff || false,
-      plan: subData?.plan || "none",
-      subscription: subData || null,
+      id: userData.user.id,
+      name: userData.user.user_metadata?.full_name || userData.user.email,
+      email: userData.user.email,
+      plan: subscription.plan,
+      isStaff: subscription.is_staff,
+      stripeCustomerId: subscription.stripe_customer_id || null,
+      stripeSubscriptionId: subscription.stripe_subscription_id || null,
+      currentPeriodEnd: subscription.current_period_end || null,
     });
   } catch (err) {
-    console.error("mylabs-user error:", err);
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
