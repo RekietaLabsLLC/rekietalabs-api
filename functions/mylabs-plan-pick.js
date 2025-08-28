@@ -1,104 +1,74 @@
-// /functions/mylabs-plan-pick.js
-import express from "express";
-import dotenv from "dotenv";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-dotenv.config();
-const router = express.Router();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+});
 
-// Supabase client
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY // must be service role
 );
 
-// Stripe client
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// Allowed origins
-const allowedOrigins = [
-  "https://accounts.rekietalabs.com",
-  "https://market.rekietalabs.com",
-  "https://giftcard.hub.rekietalabs.com",
-  "https://customer.portal.hub.rekietalabs.com",
-  "https://staff.portal.hub.rekietalabs.com",
-];
-
-// CORS middleware
-router.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
-  next();
-});
 
-// POST /plan-pick
-// Body: { user_id: string, plan: 'basic' | 'premium', email: string }
-router.post("/", async (req, res) => {
   try {
-    const { user_id, plan, email } = req.body;
-    if (!user_id || !plan || !email) {
-      return res.status(400).json({ error: "Missing required fields" });
+    // 1. Get the logged-in user from Supabase
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Missing auth token" });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user) {
+      return res.status(401).json({ error: "Invalid user session" });
     }
 
-    // Fetch subscription row
-    const { data: subscription, error: subError } = await supabase
+    // 2. Check if user already has a Stripe customer
+    let { data: userRecord, error: dbError } = await supabase
       .from("user_subscriptions")
-      .select("*")
-      .eq("user_id", user_id)
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
       .single();
 
-    if (subError || !subscription) {
-      return res.status(404).json({ error: "User subscription not found" });
+    let customer;
+
+    if (userRecord?.stripe_customer_id) {
+      // already exists
+      customer = await stripe.customers.retrieve(userRecord.stripe_customer_id);
+    } else {
+      // 3. Create new Stripe customer
+      customer = await stripe.customers.create({
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email,
+        metadata: {
+          supabase_user_id: user.id,
+          plan: "not-selected", // default until they pick in portal
+        },
+      });
+
+      // 4. Save Stripe customer in Supabase
+      await supabase.from("user_subscriptions").insert([
+        {
+          user_id: user.id,
+          stripe_customer_id: customer.id,
+          plan: "not-selected",
+        },
+      ]);
     }
 
-    // Staff override: automatically premium
-    let finalPlan = plan;
-    if (subscription.is_staff) {
-      finalPlan = "premium";
-    }
-
-    // Map to Stripe Price IDs
-    const priceMap = {
-      basic: process.env.STRIPE_BASIC_PRICE_ID,
-      premium: process.env.STRIPE_PREMIUM_PRICE_ID,
-    };
-    const stripePriceId = priceMap[finalPlan];
-    if (!stripePriceId) {
-      return res.status(400).json({ error: "Invalid plan selected" });
-    }
-
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      customer_email: email,
-      line_items: [{ price: stripePriceId, quantity: 1 }],
-      success_url: `https://accounts.rekietalabs.com/mylabs/dashboard`,
-      cancel_url: `https://accounts.rekietalabs.com/mylabs/pick-plan?cancelled=true`,
-      metadata: {
-        user_id,
-        selected_plan: finalPlan,
-      },
+    // 5. Create Customer Portal session
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: "https://accounts.rekietalabs.com/mylabs/dashboard",
     });
 
-    // Save pending plan in Supabase
-    const { error: updateError } = await supabase
-      .from("user_subscriptions")
-      .update({ plan: finalPlan })
-      .eq("user_id", user_id);
+    // 6. Return portal URL to frontend
+    return res.status(200).json({ url: portalSession.url });
 
-    if (updateError) console.error("Failed to update subscription:", updateError);
-
-    res.json({ checkout_url: session.url });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Pick plan API error:", err);
+    return res.status(500).json({ error: err.message });
   }
-});
-
-export default router;
+}
