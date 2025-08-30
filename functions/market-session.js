@@ -30,6 +30,12 @@ const products = [
     name: "Fidget Tree (Rainbow)",
     price: 8.00,
     stripePriceId: "price_1Rz3DCD69KEDp05GaRCWZuiL"
+  },
+  {
+      id: "sting-ray",
+    name: "Sting Ray (Customizable) 2 for 3$",
+    price: 3.00,
+    stripePriceId: "price_1S1f0pD69KEDp05GspfjKg1K"
   }
 ];
 
