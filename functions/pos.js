@@ -33,7 +33,7 @@ async function updateStock(newStock) {
 
 // --- Email Setup ---
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'zoho',
   auth: {
     user: process.env.ORDERS_USER,
     pass: process.env.ORDERS_PASS
