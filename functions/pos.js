@@ -1,5 +1,5 @@
 import express from 'express';
-import { Octokit } from "octokit";
+import { Octokit } from '@octokit/rest';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
