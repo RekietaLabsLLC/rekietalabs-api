@@ -61,7 +61,7 @@ app.use(cors({
     'https://giftcard.hub.rekietalabs.com',
     'https://customer.portal.hub.rekietalabs.com',
     'https://staff.portal.hub.rekietalabs.com',
-    'https://pos.rekietlabs.com',
+    'https://pos.rekietalabs.com',
   ],
   credentials: true, // <-- allow cookies
   methods: ['GET', 'POST'],
