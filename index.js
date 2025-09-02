@@ -39,6 +39,7 @@ import configLoginRouter from './functions/config-login.js';
 import userRouter from './functions/user.js'; // new route for dashboard 
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 import myLabsUserRouter from './functions/mylabs-user.js';
+import posRouter from './functions/pos.js';
 
 
 
@@ -80,10 +81,14 @@ app.use('/config-login', configLoginRouter); // handles GitHub token and sets co
 app.use('/mylabs/user', userRouter); // secure route for dashboard info
 app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
-
+app.use('/pos', posRouter);
 // Health checks
 app.get('/market-session', (req, res) => {
   res.send('🛒 Market Session API live');
+});
+
+app.get('/pos', (req, res) => {
+  res.send('📺 POS API Live');
 });
 
 app.get('/giftcard-buy-session', (req, res) => {
