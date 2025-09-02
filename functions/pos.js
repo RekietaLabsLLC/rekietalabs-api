@@ -1,3 +1,4 @@
+// functions/pos.js
 import express from 'express';
 import { Octokit } from '@octokit/rest';
 import dotenv from 'dotenv';
@@ -47,7 +48,7 @@ async function sendEmail(to, subject, body) {
       subject,
       text: body
     });
-    console.log(`Email sent to ${to}`);
+    console.log(`📧 Email sent to ${to}`);
   } catch (err) {
     console.error("Failed to send email:", err);
   }
@@ -59,8 +60,8 @@ router.post('/', async (req, res) => {
 
   try {
     // --- PIN Validation ---
-    if(action === 'validate-pin'){
-      if(pins.includes(pin)){
+    if (action === 'validate-pin') {
+      if (pins.includes(pin)) {
         return res.json({ success: true });
       } else {
         return res.json({ success: false });
@@ -68,8 +69,8 @@ router.post('/', async (req, res) => {
     }
 
     // --- Checkout ---
-    if(action === 'checkout'){
-      if(!items || items.length === 0) 
+    if (action === 'checkout') {
+      if (!items || items.length === 0)
         return res.json({ success: false, message: "Cart is empty" });
 
       // Load current stock
@@ -79,10 +80,10 @@ router.post('/', async (req, res) => {
       const stockData = JSON.parse(Buffer.from(stockRes.data.content, 'base64').toString());
 
       // Update stock
-      for(const cartItem of items){
-        const prod = stockData.find(p=>p.name===cartItem.name);
-        if(!prod) return res.json({ success:false, message:`Product not found: ${cartItem.name}`});
-        if(cartItem.qty > prod.stock) return res.json({ success:false, message:`Insufficient stock for: ${cartItem.name}`});
+      for (const cartItem of items) {
+        const prod = stockData.find(p => p.name === cartItem.name);
+        if (!prod) return res.json({ success: false, message: `Product not found: ${cartItem.name}` });
+        if (cartItem.qty > prod.stock) return res.json({ success: false, message: `Insufficient stock for: ${cartItem.name}` });
         prod.stock -= cartItem.qty;
       }
 
@@ -90,12 +91,12 @@ router.post('/', async (req, res) => {
       await updateStock(stockData);
 
       // Generate receipt link
-      const receiptId = crypto.randomBytes(4).toString('hex');
+      const receiptId = crypto.randomBytes(6).toString('hex');
       const receiptUrl = `https://receipts.rekietalabs.com/market/${receiptId}`;
 
       // Send receipt email if provided
-      if(email){
-        const body = `Thank you for your purchase!\nPayment type: ${payment}\nReceipt: ${receiptUrl}`;
+      if (email) {
+        const body = `Thank you for your purchase!\n\nPayment type: ${payment}\nReceipt: ${receiptUrl}`;
         await sendEmail(email, 'Your RekietaLabs POS Receipt', body);
       }
 
@@ -103,7 +104,7 @@ router.post('/', async (req, res) => {
     }
 
     return res.json({ success: false, message: "Unknown action" });
-  } catch(err){
+  } catch (err) {
     console.error(err);
     return res.json({ success: false, message: "Server error" });
   }
