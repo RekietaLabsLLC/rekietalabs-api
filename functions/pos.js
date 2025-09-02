@@ -97,7 +97,7 @@ router.post('/', async (req, res) => {
       // Send receipt email if provided
       if (email) {
         const body = `Thank you for your purchase!\n\nPayment type: ${payment}\nReceipt: ${receiptUrl}`;
-        await sendEmail(email, 'Your RekietaLabs POS Receipt', body);
+        await sendEmail(email, 'Your RekietaLabs Receipt', body);
       }
 
       return res.json({ success: true, receiptUrl });
