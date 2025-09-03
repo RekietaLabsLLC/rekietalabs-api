@@ -18,7 +18,7 @@ const receiptOwner = 'RekietaLabsLLC';
 const receiptRepo = 'RekietaLabs-Receipts';
 const receiptFolder = 'market';
 
-// --- Employee PINs from API ---
+// --- Employee PINs ---
 const pins = ["7606", "4646"];
 
 // --- Update stock.json in GitHub ---
@@ -62,8 +62,8 @@ async function sendEmail(to, subject, html) {
   }
 }
 
-// --- Create Receipt HTML in Receipts Repo ---
-async function createReceiptHTML(items, total, payment, receiptId) {
+// --- Create Receipt HTML ---
+async function createReceiptHTML(items, subtotal, payment, amountPaid, change, receiptId) {
   const htmlContent = `
   <html>
   <head>
@@ -75,6 +75,8 @@ async function createReceiptHTML(items, total, payment, receiptId) {
       table { width: 100%; border-collapse: collapse; margin-top: 20px; }
       th, td { border: 1px solid #fff; padding: 8px; text-align: left; }
       th { background: #1753aa; color: #fff; }
+      .summary { margin-top: 20px; font-size: 1.1rem; }
+      .summary p { margin: 5px 0; }
       a.button { display:inline-block; padding:10px 20px; background:#1753aa; color:#fff; text-decoration:none; border-radius:6px; margin-top:20px; }
     </style>
   </head>
@@ -85,9 +87,11 @@ async function createReceiptHTML(items, total, payment, receiptId) {
     <table>
       <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
       ${items.map(i => `<tr><td>${i.name}</td><td>${i.qty}</td><td>$${(i.price*i.qty).toFixed(2)}</td></tr>`).join('')}
-      <tr><td colspan="2"><strong>Total</strong></td><td>$${total.toFixed(2)}</td></tr>
+      <tr><td colspan="2"><strong>Subtotal</strong></td><td>$${subtotal.toFixed(2)}</td></tr>
+      <tr><td colspan="2"><strong>Amount Paid</strong></td><td>$${amountPaid.toFixed(2)}</td></tr>
+      <tr><td colspan="2"><strong>Change Due</strong></td><td>$${change.toFixed(2)}</td></tr>
     </table>
-    <p><a class="button" href="#">Download as PDF</a></p>
+    <p><a class="button" href="#" onclick="window.print()">Download as PDF</a></p>
   </body>
   </html>
   `;
@@ -115,56 +119,60 @@ async function createReceiptHTML(items, total, payment, receiptId) {
 
 // --- POS Route ---
 router.post('/', async (req, res) => {
-  const { action, pin, items, payment, email } = req.body;
+  const { action, pin, items, payment, email, amountPaid } = req.body;
 
   try {
-    // PIN validation
+    // --- PIN Validation ---
     if(action === 'validate-pin') {
       return res.json({ success: pins.includes(pin) });
     }
 
-    // Checkout
+    // --- Checkout ---
     if(action === 'checkout') {
-      if(!items || items.length===0) return res.json({ success:false, message:"Cart is empty" });
+      if(!items || items.length === 0)
+        return res.json({ success:false, message:"Cart is empty" });
 
       // Load stock
       const stockRes = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', { owner: stockOwner, repo: stockRepo, path: stockPath });
       const stockData = JSON.parse(Buffer.from(stockRes.data.content,'base64').toString());
 
-      // Compute total and check stock
-      let total = 0;
-      for(const cartItem of items) {
-        const prod = stockData.find(p=>p.name===cartItem.name);
+      // Compute subtotal & check stock
+      let subtotal = 0;
+      for(const cartItem of items){
+        const prod = stockData.find(p => p.name === cartItem.name);
         if(!prod) return res.json({ success:false, message:`Product not found: ${cartItem.name}`});
-        if(cartItem.qty>prod.stock) return res.json({ success:false, message:`Insufficient stock for: ${cartItem.name}`});
-        total += cartItem.qty*prod.price;
+        if(cartItem.qty > prod.stock) return res.json({ success:false, message:`Insufficient stock for: ${cartItem.name}`});
+        subtotal += cartItem.qty * prod.price;
       }
 
-      // Update stock **after successful checkout**
-      for(const cartItem of items) {
-        const prod = stockData.find(p=>p.name===cartItem.name);
+      if(amountPaid < subtotal) return res.json({ success:false, message:"Amount paid is less than total" });
+      const change = amountPaid - subtotal;
+
+      // Update stock after successful checkout
+      for(const cartItem of items){
+        const prod = stockData.find(p => p.name === cartItem.name);
         prod.stock -= cartItem.qty;
       }
       await updateStock(stockData);
 
       // Create receipt
       const receiptId = crypto.randomBytes(6).toString('hex');
-      const receiptUrl = await createReceiptHTML(items, total, payment, receiptId);
+      const receiptUrl = await createReceiptHTML(items, subtotal, payment, amountPaid, change, receiptId);
 
-      // Send email
-      if(email) {
+      // Send summary email
+      if(email){
         const html = `
           <div style="font-family:Arial,sans-serif; color:#fff; background:#0a0a0a; padding:20px; text-align:center;">
             <img src="https://rekietalabs.com/IMG_0926.jpeg" style="width:80px; border-radius:50%; margin-bottom:15px;">
             <h2 style="color:#1753aa;">Thank you for your purchase!</h2>
             <p>Payment: ${payment}</p>
-            <h3>Total: $${total.toFixed(2)}</h3>
+            <h3>Total: $${subtotal.toFixed(2)}</h3>
             <p><a href="${receiptUrl}" style="color:#fff; background:#1753aa; padding:10px 20px; border-radius:8px; text-decoration:none;">View Receipt</a></p>
           </div>`;
         await sendEmail(email, "Your RekietaLabs Receipt", html);
       }
 
-      return res.json({ success:true, receiptUrl });
+      return res.json({ success:true, receiptUrl, change });
     }
 
     return res.json({ success:false, message:"Unknown action" });
