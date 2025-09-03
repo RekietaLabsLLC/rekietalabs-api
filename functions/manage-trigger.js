@@ -1,4 +1,4 @@
-// /functions/admin-disable-trigger.js
+// /functions/manage-trigger.js
 import express from "express";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
@@ -6,40 +6,46 @@ import { createClient } from "@supabase/supabase-js";
 dotenv.config();
 const router = express.Router();
 
-// Initialize Supabase client with Service Role Key (server-side only)
+// Supabase client with service role key (server-side only)
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-router.use(express.json());
-
-router.post("/", async (req, res) => {
-  const { table, trigger, action } = req.body;
-
-  if (!table || !trigger) {
-    return res.status(400).json({ error: "Missing table or trigger name" });
+// GET / => list triggers on auth.users
+router.get("/", async (req, res) => {
+  try {
+    const { data, error } = await supabase.rpc("list_triggers_on_auth_users");
+    if (error) throw error;
+    res.json({ triggers: data });
+  } catch (err) {
+    console.error("Error listing triggers:", err);
+    res.status(500).json({ error: err.message });
   }
+});
 
-  // Default to 'disable' if action is not provided
-  const sqlAction = action === "drop" ? "DROP" : "DISABLE";
-
-  const sql = sqlAction === "DROP"
-    ? `DROP TRIGGER IF EXISTS ${trigger} ON ${table};`
-    : `ALTER TABLE ${table} DISABLE TRIGGER ${trigger};`;
+// POST / => disable or drop a trigger
+router.post("/", async (req, res) => {
+  const { triggerName, action } = req.body; // action: "disable" or "drop"
+  if (!triggerName || !action) return res.status(400).json({ error: "triggerName and action required" });
 
   try {
-    const { data, error } = await supabase.rpc("execute_sql", { sql_query: sql });
-
-    if (error) {
-      console.error("SQL execution error:", error);
-      return res.status(500).json({ error: error.message, details: error });
+    let sql;
+    if (action === "disable") {
+      sql = `ALTER TABLE auth.users DISABLE TRIGGER "${triggerName}"`;
+    } else if (action === "drop") {
+      sql = `DROP TRIGGER "${triggerName}" ON auth.users`;
+    } else {
+      return res.status(400).json({ error: "Invalid action, must be 'disable' or 'drop'" });
     }
 
-    res.json({ success: true, action: sqlAction, table, trigger });
+    const { data, error } = await supabase.rpc("exec_sql", { query: sql });
+    if (error) throw error;
+
+    res.json({ success: true, action, trigger: triggerName });
   } catch (err) {
-    console.error("Unhandled error:", err);
-    res.status(500).json({ error: err.message, details: err });
+    console.error("Error managing trigger:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 
