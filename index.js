@@ -40,7 +40,7 @@ import userRouter from './functions/user.js'; // new route for dashboard
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 import myLabsUserRouter from './functions/mylabs-user.js';
 import posRouter from './functions/pos.js';
-
+import authRouter from './functions/oauth-api.js';
 
 
 // -----------------------------
@@ -83,6 +83,7 @@ app.use('/mylabs/user', userRouter); // secure route for dashboard info
 app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
 app.use('/pos', posRouter);
+app.use('/oauth', authRouter);
 // Health checks
 app.get('/market-session', (req, res) => {
   res.send('🛒 Market Session API live');
@@ -98,6 +99,10 @@ app.get('/giftcard-buy-session', (req, res) => {
 
 app.get('/', (req, res) => {
   res.send('🔒 RekietaLabs API is live!');
+});
+
+app.get('/auth', (req, res) => {
+  res.send('🧾 RekietaLabs OAuth API is live!');
 });
 
 // -----------------------------
