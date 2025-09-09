@@ -1,28 +1,22 @@
+// oauth.js
 import express from 'express';
-import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: '*', credentials: true }));
+app.use(express.json());
+app.use(cookieParser());
 
-// Initialize Supabase client using environment variables
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize Supabase
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-// Middleware to get logged-in user (example using session cookie)
-// Replace with your actual session logic
-const getUserIdFromSession = async (req) => {
-  const sessionToken = req.headers.cookie?.split('mylabs_session=')[1];
-  if (!sessionToken) return null;
-
-  const { data: { user }, error } = await supabase.auth.getUser(sessionToken);
-  if (error || !user) return null;
-  return user.id;
-};
-
-// GET /OAuth?provider=<provider_id>
-app.get('/OAuth', async (req, res) => {
+// GET /oauth?provider=<provider_id>
+app.get('/', async (req, res) => {
   try {
     const providerId = req.query.provider;
     if (!providerId) return res.status(400).json({ error: 'Provider not specified' });
@@ -40,12 +34,17 @@ app.get('/OAuth', async (req, res) => {
 
     const provider = providers[0];
 
-    // Get current logged-in user
-    const userId = await getUserIdFromSession(req);
+    // Example: get user ID from session cookie
+    const sessionToken = req.headers.cookie?.split('mylabs_session=')[1];
+    let userId = null;
+    if (sessionToken) {
+      const { data: { user }, error } = await supabase.auth.getUser(sessionToken);
+      if (!error && user) userId = user.id;
+    }
 
     let is_linked = false;
     if (userId) {
-      const { data: linked, error: linkError } = await supabase
+      const { data: linked } = await supabase
         .from('user_providers')
         .select('*')
         .eq('user_id', userId)
@@ -61,15 +60,16 @@ app.get('/OAuth', async (req, res) => {
       external_settings_url: provider.external_settings_url,
       is_linked
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
+// Start the server if this file is run directly
+const PORT = process.env.PORT || 10001;
 app.listen(PORT, () => {
   console.log(`OAuth API running on port ${PORT}`);
 });
+
+export default app;
