@@ -40,6 +40,7 @@ import userRouter from './functions/user.js'; // new route for dashboard
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 import myLabsUserRouter from './functions/mylabs-user.js';
 import posRouter from './functions/pos.js';
+import oauthRouter from './functions/oauth.js';
 
 
 // -----------------------------
@@ -82,6 +83,8 @@ app.use('/mylabs/user', userRouter); // secure route for dashboard info
 app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
 app.use('/pos', posRouter);
+app.use('/oauth', oauthRouter);
+
 // Health checks
 app.get('/market-session', (req, res) => {
   res.send('🛒 Market Session API live');
