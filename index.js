@@ -34,12 +34,10 @@ import signupRouter from './functions/signup.js';
 import loginRouter from './functions/login.js';
 import marketSessionHandler from './functions/market-session.js';
 import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
-import ticketsRouter from './functions/tickets/index.js';
 import configLoginRouter from './functions/config-login.js';
 import userRouter from './functions/user.js'; // new route for dashboard 
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 import myLabsUserRouter from './functions/mylabs-user.js';
-import posRouter from './functions/pos.js';
 import oauthRouter from './functions/oauth.js';
 
 
@@ -59,9 +57,6 @@ app.use(cors({
     'https://accounts.rekietalabs.com',
     'https://market.rekietalabs.com',
     'https://giftcard.hub.rekietalabs.com',
-    'https://customer.portal.hub.rekietalabs.com',
-    'https://staff.portal.hub.rekietalabs.com',
-    'https://pos.rekietalabs.com',
   ],
   credentials: true, // <-- allow cookies
   methods: ['GET', 'POST'],
@@ -77,12 +72,10 @@ app.use('/signup', signupRouter);
 app.use('/login', loginRouter);
 app.use('/market-session', marketSessionHandler);
 app.use('/giftcard-buy-session', giftcardBuySessionHandler);
-app.use('/tickets', ticketsRouter);
 app.use('/config-login', configLoginRouter); // handles GitHub token and sets cookie
 app.use('/mylabs/user', userRouter); // secure route for dashboard info
 app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
-app.use('/pos', posRouter);
 app.use('/oauth', oauthRouter);
 
 // Health checks
@@ -90,9 +83,6 @@ app.get('/market-session', (req, res) => {
   res.send('🛒 Market Session API live');
 });
 
-app.get('/pos', (req, res) => {
-  res.send('📺 POS API Live');
-});
 
 app.get('/giftcard-buy-session', (req, res) => {
   res.send('🎁 Gift Card Buy Session API live');
