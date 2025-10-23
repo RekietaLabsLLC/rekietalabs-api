@@ -26,19 +26,19 @@ const products = [
     stripePriceId: "price_1RcWqMD69KEDp05GtJnngu4v"
   },
   {
-      id: "flower-fidget-b",
+    id: "flower-fidget-b",
     name: "Fidget Tree (Rainbow)",
     price: 8.00,
     stripePriceId: "price_1Rz3DCD69KEDp05GaRCWZuiL"
   },
   {
-      id: "sting-ray",
+    id: "sting-ray",
     name: "Sting Ray (Customizable) 2 for 3$",
     price: 3.00,
     stripePriceId: "price_1S1f0pD69KEDp05GspfjKg1K"
   },
   {
-      id: "flower-fidget-c",
+    id: "flower-fidget-c",
     name: "Flower Fidget (Customizable)",
     price: 5.00,
     stripePriceId: "price_1S1ovpD69KEDp05GphHmUypx"
@@ -72,10 +72,13 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // ✅ Create checkout session (all payment methods + promo codes)
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
+      allow_promotion_codes: true, // ✅ Enables promo code entry
+      automatic_tax: { enabled: false },
+      billing_address_collection: 'auto',
       success_url: 'https://market.rekietalabs.com/orders/success',
       cancel_url: 'https://market.rekietalabs.com/orders/canceled',
     });
