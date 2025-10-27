@@ -8,8 +8,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // ✅ Product catalog
 const products = [
   {
-    id: "wizard-dino",
-    name: "Wizard Dino",
+    id: "pumpkin-dino",
+    name: "Pumpkin Dino",
     price: 3.00,
     stripePriceId: "price_1RZdFXD69KEDp05GomdRWxNj"
   },
