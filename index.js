@@ -1,12 +1,15 @@
 // Check required env vars BEFORE starting server
 const requiredEnvVars = [
-  'SUPPORT_SYSTEM_SMTP_HOST',
-  'SUPPORT_SYSTEM_SMTP_PORT',
-  'SUPPORT_SYSTEM_SMTP_USER',
-  'SUPPORT_SYSTEM_SMTP_PASS',
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
   'SUPABASE_ANON_KEY',
+  'ZOHO_CLIENT_ID',
+  'ZOHO_CLIENT_SECRET',
+  'ZOHO_REFRESH_TOKEN',
+  'ZOHO_FROM_EMAIL',
+  'GITHUB_OWNER',
+  'GITHUB_REPO',
+  'GITHUB_TOKEN'
 ];
 
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
@@ -31,11 +34,11 @@ import loginRouter from './functions/login.js';
 import marketSessionHandler from './functions/market-session.js';
 import giftcardBuySessionHandler from './functions/giftcard-buy-session.js';
 import configLoginRouter from './functions/config-login.js';
-import userRouter from './functions/user.js'; // new route for dashboard 
+import userRouter from './functions/user.js';
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 import myLabsUserRouter from './functions/mylabs-user.js';
 import oauthRouter from './functions/oauth.js';
-
+import moneyRouter from './functions/money.js'; // NEW: Money Dashboard API
 
 // -----------------------------
 // Setup
@@ -54,7 +57,7 @@ app.use(cors({
     'https://market.rekietalabs.com',
     'https://giftcard.hub.rekietalabs.com',
   ],
-  credentials: true, // <-- allow cookies
+  credentials: true, // allow cookies
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'x-admin-key', 'x-staff-key', 'username', 'password'],
 }));
@@ -68,25 +71,19 @@ app.use('/signup', signupRouter);
 app.use('/login', loginRouter);
 app.use('/market-session', marketSessionHandler);
 app.use('/giftcard-buy-session', giftcardBuySessionHandler);
-app.use('/config-login', configLoginRouter); // handles GitHub token and sets cookie
-app.use('/mylabs/user', userRouter); // secure route for dashboard info
+app.use('/config-login', configLoginRouter);
+app.use('/mylabs/user', userRouter);
 app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
 app.use('/oauth', oauthRouter);
 
+// NEW: Money Dashboard Routes
+app.use('/money', moneyRouter);
+
 // Health checks
-app.get('/market-session', (req, res) => {
-  res.send('🛒 Market Session API live');
-});
-
-
-app.get('/giftcard-buy-session', (req, res) => {
-  res.send('🎁 Gift Card Buy Session API live');
-});
-
-app.get('/', (req, res) => {
-  res.send('🔒 RekietaLabs API is live!');
-});
+app.get('/market-session', (req, res) => res.send('🛒 Market Session API live'));
+app.get('/giftcard-buy-session', (req, res) => res.send('🎁 Gift Card Buy Session API live'));
+app.get('/', (req, res) => res.send('🔒 RekietaLabs API is live!'));
 
 // -----------------------------
 // Start server
