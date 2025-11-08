@@ -145,3 +145,5 @@ app.post('/money/add', async (req, res) => {
 // -------------------- Start Server --------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Money API running on port ${PORT}`));
+
+export default router;
