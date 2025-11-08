@@ -12,8 +12,8 @@ let verificationCode = null;
 let loggedInUser = null;
 
 // -------------------- Hard-coded login --------------------
-const LOGIN_USERNAME = 'YOUR_USERNAME';
-const LOGIN_PASSWORD = 'YOUR_PASSWORD';
+const LOGIN_USERNAME = 'kmrekieta';
+const LOGIN_PASSWORD = 'Beauty11';
 
 // -------------------- GitHub Setup --------------------
 const octokit = new Octokit({
