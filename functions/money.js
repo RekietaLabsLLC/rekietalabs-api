@@ -1,11 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const fetch = require('node-fetch');
-const bodyParser = require('body-parser');
-const { Octokit } = require('@octokit/rest');
+import dotenv from 'dotenv';
+dotenv.config();
+import express from 'express';
+import fetch from 'node-fetch';
+import bodyParser from 'body-parser';
+import { Octokit } from '@octokit/rest';
 
-const app = express();
-app.use(bodyParser.json());
+const router = express.Router();
+router.use(bodyParser.json());
 
 // -------------------- In-memory storage --------------------
 let verificationCode = null;
@@ -64,11 +65,10 @@ async function sendVerificationEmail(toEmail, code) {
 
 // -------------------- Routes --------------------
 
-// 1️⃣ /money/login
-app.post('/money/login', async (req, res) => {
+// 1️⃣ Login
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   if (username === LOGIN_USERNAME && password === LOGIN_PASSWORD) {
-    // generate 6-digit code
     verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     try {
       await sendVerificationEmail(process.env.ZOHO_FROM_EMAIL, verificationCode);
@@ -82,21 +82,21 @@ app.post('/money/login', async (req, res) => {
   }
 });
 
-// 2️⃣ /money/verify
-app.post('/money/verify', (req, res) => {
+// 2️⃣ Verify
+router.post('/verify', (req, res) => {
   const { code } = req.body;
   if (!loggedInUser) return res.json({ success: false, message: 'Login required' });
 
   if (code === verificationCode) {
-    verificationCode = null; // reset code after successful verify
+    verificationCode = null;
     res.json({ success: true });
   } else {
     res.json({ success: false, message: 'Invalid verification code' });
   }
 });
 
-// 3️⃣ /money/logs
-app.get('/money/logs', async (req, res) => {
+// 3️⃣ Get Logs
+router.get('/logs', async (req, res) => {
   try {
     const { data } = await octokit.repos.getContent({
       owner: GITHUB_OWNER,
@@ -119,8 +119,8 @@ app.get('/money/logs', async (req, res) => {
   }
 });
 
-// 4️⃣ /money/add
-app.post('/money/add', async (req, res) => {
+// 4️⃣ Add Log
+router.post('/add', async (req, res) => {
   const logData = req.body;
   if (!loggedInUser) return res.json({ success: false, message: 'Login required' });
 
@@ -133,7 +133,7 @@ app.post('/money/add', async (req, res) => {
       repo: GITHUB_REPO,
       path: `${GITHUB_FOLDER}/${fileName}`,
       message: `Add transaction ${fileName}`,
-      content: content,
+      content,
       branch: GITHUB_BRANCH
     });
     res.json({ success: true });
@@ -142,6 +142,4 @@ app.post('/money/add', async (req, res) => {
   }
 });
 
-// -------------------- Start Server --------------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Money API running on port ${PORT}`));
+export default router;
