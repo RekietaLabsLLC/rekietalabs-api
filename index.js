@@ -1,15 +1,6 @@
 // Check required env vars BEFORE starting server
 const requiredEnvVars = [
-  'SUPABASE_URL',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'SUPABASE_ANON_KEY',
-  'ZOHO_CLIENT_ID',
-  'ZOHO_CLIENT_SECRET',
-  'ZOHO_REFRESH_TOKEN',
-  'ZOHO_FROM_EMAIL',
-  'GITHUB_OWNER',
-  'GITHUB_REPO',
-  'GITHUB_TOKEN'
+  'SUPABASE_URL'
 ];
 
 const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
@@ -38,8 +29,6 @@ import userRouter from './functions/user.js';
 import mylabsPlanPickRouter from './functions/mylabs-plan-pick.js';
 import myLabsUserRouter from './functions/mylabs-user.js';
 import oauthRouter from './functions/oauth.js';
-import moneyRouter from './functions/money.js'; // NEW: Money Dashboard API
-
 // -----------------------------
 // Setup
 // -----------------------------
@@ -76,9 +65,6 @@ app.use('/mylabs/user', userRouter);
 app.use('/mylabs/plan-pick', mylabsPlanPickRouter);
 app.use('/mylabs/user', myLabsUserRouter);
 app.use('/oauth', oauthRouter);
-
-// NEW: Money Dashboard Routes
-app.use('/money', moneyRouter);
 
 // Health checks
 app.get('/market-session', (req, res) => res.send('🛒 Market Session API live'));
