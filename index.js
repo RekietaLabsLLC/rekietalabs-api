@@ -84,7 +84,7 @@ app.use('/money', moneyRouter);
 app.get('/market-session', (req, res) => res.send('🛒 Market Session API live'));
 app.get('/giftcard-buy-session', (req, res) => res.send('🎁 Gift Card Buy Session API live'));
 app.get('/', (req, res) => res.send('🔒 RekietaLabs API is live!'));
-
+app.get('/money', (req, res) => res.send('Money API Live!'));
 // -----------------------------
 // Start server
 // -----------------------------
