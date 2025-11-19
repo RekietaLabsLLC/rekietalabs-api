@@ -42,6 +42,12 @@ const products = [
     name: "Flower Fidget (Customizable)",
     price: 5.00,
     stripePriceId: "price_1S1ovpD69KEDp05GphHmUypx"
+  },
+    {
+    id: "shark-fidget",
+    name: "Flower Shark(Customizable)",
+    price: 5.00,
+    stripePriceId: "price_1SUzssD69KEDp05G4E9er73N"
   }
 ];
 
