@@ -26,7 +26,7 @@ const products = [
     stripePriceId: "price_1S1f0pD69KEDp05GspfjKg1K"
   },
   {
-    id: "flower-fidget-c",
+    id: "flower-fidget",
     name: "Flower Fidget (Customizable)",
     price: 5.00,
     stripePriceId: "price_1S1ovpD69KEDp05GphHmUypx"
