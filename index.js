@@ -44,7 +44,6 @@ app.use(cors({
   origin: [
     'https://accounts.rekietalabs.com',
     'https://market.rekietalabs.com',
-    'https://giftcard.hub.rekietalabs.com',
   ],
   credentials: true, // allow cookies
   methods: ['GET', 'POST'],
